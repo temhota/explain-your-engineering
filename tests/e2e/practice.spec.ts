@@ -153,7 +153,7 @@ test("failed requests preserve answers and can be retried", async ({
     page.getByRole("button", { name: "Get follow-up" }),
   ).toBeEnabled();
 });
-test("records and plays browser audio", async ({ page, browserName }) => {
+test("records browser audio for playback", async ({ page, browserName }) => {
   test.skip(
     browserName !== "chromium",
     "Synthetic microphone provided by Chromium only; actual Safari microphone requires a manual device check.",
@@ -163,20 +163,45 @@ test("records and plays browser audio", async ({ page, browserName }) => {
     // MediaRecorder, timing, blob creation and playback remain browser-native.
     Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
       value: async () => {
-        const audio = new AudioContext();
-        const output = audio.createMediaStreamDestination();
-        const oscillator = audio.createOscillator();
-        oscillator.connect(output);
-        oscillator.start();
-        output.stream.getTracks().forEach((track) => {
-          const stop = track.stop.bind(track);
-          track.stop = () => {
-            stop();
-            oscillator.stop();
-            void audio.close();
-          };
-        });
-        return output.stream;
+        // Chromium's generator supplies real samples without a host audio device.
+        const Generator = (
+          window as unknown as {
+            MediaStreamTrackGenerator: new (options: {
+              kind: string;
+            }) => MediaStreamTrack & { writable: WritableStream };
+          }
+        ).MediaStreamTrackGenerator;
+        const AudioFrame = (
+          window as unknown as {
+            AudioData: new (options: object) => { close: () => void };
+          }
+        ).AudioData;
+        const track = new Generator({ kind: "audio" });
+        const writer = track.writable.getWriter();
+        let frame = 0;
+        const timer = setInterval(() => {
+          const samples = Float32Array.from(
+            { length: 960 },
+            (_, i) =>
+              Math.sin(((frame * 960 + i) * 2 * Math.PI * 440) / 48000) * 0.1,
+          );
+          const data = new AudioFrame({
+            format: "f32",
+            sampleRate: 48000,
+            numberOfFrames: 960,
+            numberOfChannels: 1,
+            timestamp: frame++ * 20000,
+            data: samples,
+          });
+          void writer.write(data).finally(() => data.close());
+        }, 20);
+        const stop = track.stop.bind(track);
+        track.stop = () => {
+          clearInterval(timer);
+          stop();
+          void writer.close();
+        };
+        return new MediaStream([track]);
       },
     });
   });
@@ -198,4 +223,34 @@ test("records and plays browser audio", async ({ page, browserName }) => {
   await expect(
     page.getByRole("button", { name: "Transcribe recording" }),
   ).toBeEnabled();
+});
+
+test("a stale tab cannot overwrite a newer saved answer", async ({
+  context,
+  page,
+}) => {
+  const other = await context.newPage();
+  for (const tab of [page, other]) {
+    await tab.goto("/");
+    await tab.getByRole("button", { name: "Try the example" }).waitFor();
+  }
+  await page.getByRole("button", { name: "Try the example" }).click();
+  await page.getByRole("button", { name: "Use example answer" }).click();
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem("eye-practice")!).state.session
+            ?.answer1,
+      ),
+    )
+    .toContain("derive");
+  await other.getByRole("button", { name: "Try the example" }).click();
+  await expect(
+    other.getByRole("alert").filter({ hasText: "another tab" }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Read the example response")).not.toHaveValue(
+    "",
+  );
 });
