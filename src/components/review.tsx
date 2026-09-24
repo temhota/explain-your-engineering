@@ -1,5 +1,5 @@
 import type { Session } from '@/lib/domain';
-import { sourceLinks } from '@/lib/demo';
+import { sources as sourceLinks } from '@/lib/questions';
 import styles from './trainer.module.css';
 export function Review({ session }: { session: Session }) {
   if (!session.feedback) return null;
