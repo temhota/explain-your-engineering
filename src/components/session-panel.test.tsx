@@ -19,3 +19,9 @@ it('completes an explicitly labelled fictional walkthrough', async () => {
   expect(await screen.findByRole('heading', { name: 'Communication' })).toBeInTheDocument();
   expect(store.getState().history).toHaveLength(1);
 });
+it('cancels the active operation when leaving the session screen',async()=>{
+  const store=createTrainerStore();store.getState().start({mode:'technology',questionId:'react-effects',version:1,title:'Effects',question:'When do you need an Effect?'},false);
+  store.getState().editAnswer(1,'Derived values do not need an effect.');store.getState().confirmAnswer();
+  const original=globalThis.fetch;globalThis.fetch=()=>new Promise(()=>{});
+  try{const view=render(<TrainerProvider store={store}><SessionPanel/></TrainerProvider>);await userEvent.setup().click(screen.getByRole('button',{name:'Get follow-up'}));expect(store.getState().request).not.toBeNull();view.unmount();expect(store.getState().request).toBeNull();}finally{globalThis.fetch=original;}
+});
