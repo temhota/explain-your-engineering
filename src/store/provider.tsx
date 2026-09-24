@@ -22,8 +22,8 @@ export function TrainerProvider({
 }) {
   const [store] = useState(() => supplied ?? createTrainerStore());
   useEffect(() => {
-    void store.persist.rehydrate();
-  }, [store]);
+    if (!supplied) void store.persist.rehydrate();
+  }, [store, supplied]);
   return (
     <StoreContext.Provider value={store}>
       {supplied ? children : <Hydrated>{children}</Hydrated>}

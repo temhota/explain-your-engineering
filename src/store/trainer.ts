@@ -7,8 +7,8 @@ import {
   type Operation,
   type Session,
 } from "@/lib/domain";
-import { persist, type StateStorage } from "zustand/middleware";
-import { browserStorage, guardedStorage } from "./storage";
+import { persist } from "zustand/middleware";
+import { browserStorage, guardedStorage, type StorageSource } from "./storage";
 
 export interface TrainerState {
   hydrated: boolean;
@@ -32,7 +32,7 @@ export interface TrainerState {
   deleteAttempt: (id: string) => void;
 }
 
-export function createTrainerStore(source: StateStorage = browserStorage) {
+export function createTrainerStore(source: StorageSource = browserStorage) {
   const report = (message: string) =>
     queueMicrotask(() => {
       if (store.getState().storageError !== message)

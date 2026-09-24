@@ -67,21 +67,36 @@ it("keeps an experience snapshot after editing or deleting its source card", () 
     result: "Less state",
   };
   store.getState().saveExperience(card);
-  store
-    .getState()
-    .start(
-      {
-        mode: "experience",
-        title: card.title,
-        question: "Explain a decision.",
-        experience: card,
-      },
-      false,
-    );
+  store.getState().start(
+    {
+      mode: "experience",
+      title: card.title,
+      question: "Explain a decision.",
+      experience: card,
+    },
+    false,
+  );
   store.getState().saveExperience({ ...card, decision: "Different" });
   store.getState().deleteExperience("card");
   const saved = store.getState().session!.context;
   expect(saved.mode === "experience" && saved.experience.decision).toBe(
     "Derive values",
   );
+});
+it("protects newer data in another tab and retains conflicting edits in memory", async () => {
+  const storage = memory();
+  const first = createTrainerStore(storage);
+  const second = createTrainerStore(storage);
+  await first.persist.rehydrate();
+  await second.persist.rehydrate();
+  first.getState().start(context, false);
+  first.getState().editAnswer(1, "First tab answer");
+  second.getState().start(context, false);
+  second.getState().editAnswer(1, "Second tab answer");
+  await Promise.resolve();
+  const restored = createTrainerStore(storage);
+  await restored.persist.rehydrate();
+  expect(restored.getState().session?.answer1).toBe("First tab answer");
+  expect(second.getState().session?.answer1).toBe("Second tab answer");
+  expect(second.getState().storageError).toMatch(/another tab/i);
 });
