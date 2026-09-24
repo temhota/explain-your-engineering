@@ -165,7 +165,8 @@ export function Practice({
       )}
       <p className={styles.bottomNote}>
         <ShieldCheck size={16} />
-        Your practice stays in this browser. No account. No leaderboard.
+        Practice history is saved in this browser. Live AI sends answers and
+        context to OpenAI. No account. No leaderboard.
       </p>
     </>
   );

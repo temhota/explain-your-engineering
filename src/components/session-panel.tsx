@@ -99,6 +99,22 @@ export function SessionPanel() {
             review show the full experience. No AI requests are made.
           </p>
         )}
+        {!session.demo && (
+          <p className={styles.notice}>
+            Live follow-up and review requests send your confirmed answers and
+            the complete selected experience card (if any) to OpenAI.
+            Transcription sends your audio. Use non-confidential examples.
+            Deleting saved browser data does not delete provider-held data.{" "}
+            <a
+              href="https://developers.openai.com/api/docs/guides/your-data"
+              target="_blank"
+              rel="noreferrer"
+            >
+              OpenAI data policy
+            </a>
+            .
+          </p>
+        )}
         <div className={styles.steps}>
           <span className={first ? styles.activeStep : ""}>
             01 · Your answer
