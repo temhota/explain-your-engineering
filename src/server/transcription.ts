@@ -7,7 +7,32 @@ export async function transcribeRequest(request: Request): Promise<Response> {
     return errorResponse(413, "TOO_LARGE", "Keep recordings below 10 MB.");
   let form: FormData;
   try {
-    form = await request.formData();
+    if (!request.body)
+      return errorResponse(400, "BAD_AUDIO", "Provide an audio file.");
+    const reader = request.body.getReader();
+    const chunks: Uint8Array<ArrayBuffer>[] = [];
+    let bytes = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 11 * 1024 * 1024) {
+          await reader.cancel();
+          return errorResponse(
+            413,
+            "TOO_LARGE",
+            "Keep recordings below 10 MB.",
+          );
+        }
+        chunks.push(new Uint8Array(value));
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    form = await new Response(new Blob(chunks), {
+      headers: { "Content-Type": request.headers.get("content-type") ?? "" },
+    }).formData();
   } catch {
     return errorResponse(400, "BAD_AUDIO", "Provide an audio file.");
   }

@@ -24,3 +24,14 @@ it("rejects an empty or unsupported audio upload", async () => {
   );
   expect(response.status).toBe(400);
 });
+it("rejects oversized multipart bodies without trusting content-length", async () => {
+  vi.stubEnv("AI_ENABLED", "true");
+  const request = new Request("http://localhost/api/transcription", {
+    method: "POST",
+    headers: { "Content-Type": "multipart/form-data; boundary=test" },
+    body: new Uint8Array(12 * 1024 * 1024),
+  });
+  expect(request.headers.has("content-length")).toBe(false);
+  const response = await transcribeRequest(request);
+  expect(response.status).toBe(413);
+});
