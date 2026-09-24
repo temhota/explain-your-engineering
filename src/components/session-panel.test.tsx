@@ -1,0 +1,21 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, it } from 'vitest';
+import { TrainerProvider } from '@/store/provider';
+import { createTrainerStore } from '@/store/trainer';
+import { SessionPanel } from './session-panel';
+it('completes an explicitly labelled fictional walkthrough', async () => {
+  const store = createTrainerStore();
+  store.getState().start({ mode: 'technology', questionId: 'react-effects', version: 1, title: 'Effects', question: 'When do you need an Effect?' }, true);
+  render(<TrainerProvider store={store}><SessionPanel /></TrainerProvider>);
+  const user = userEvent.setup();
+  expect(screen.getByText(/scripted example/i)).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /use example answer/i }));
+  await user.click(screen.getByRole('button', { name: /confirm answer/i }));
+  await user.click(screen.getByRole('button', { name: /show follow-up/i }));
+  await user.click(screen.getByRole('button', { name: /use example answer/i }));
+  await user.click(screen.getByRole('button', { name: /confirm answer/i }));
+  await user.click(screen.getByRole('button', { name: /show example review/i }));
+  expect(await screen.findByRole('heading', { name: 'Communication' })).toBeInTheDocument();
+  expect(store.getState().history).toHaveLength(1);
+});
