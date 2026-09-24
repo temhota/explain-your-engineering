@@ -1,7 +1,15 @@
 import { createStore } from 'zustand/vanilla';
-import type { Context, Feedback, Operation, Session } from '@/lib/domain';
+import { experienceSchema, type Experience, type Context, type Feedback, type Operation, type Session } from '@/lib/domain';
+import { persist, type StateStorage } from 'zustand/middleware';
+import { browserStorage, guardedStorage } from './storage';
 
 export interface TrainerState {
+  hydrated: boolean;
+  storageError: string | null;
+  experiences: Experience[];
+  saveExperience: (card: Experience) => void;
+  deleteExperience: (id: string) => void;
+  clearSavedData: () => Promise<void>;
   session: Session | null;
   history: Session[];
   request: { token: string; operation: Operation } | null;
@@ -17,8 +25,14 @@ export interface TrainerState {
   deleteAttempt: (id: string) => void;
 }
 
-export function createTrainerStore() {
-  return createStore<TrainerState>()((set, get) => ({
+export function createTrainerStore(source: StateStorage = browserStorage) {
+  const report = (message: string) => queueMicrotask(() => { if(store.getState().storageError !== message) store.setState({storageError:message}); });
+  const storage = guardedStorage(source, report);
+  const store = createStore<TrainerState>()(persist((set, get) => ({
+    hydrated: false, storageError: null, experiences: [],
+    saveExperience: card => { const parsed = experienceSchema.parse(card); set(state => ({experiences:[parsed,...state.experiences.filter(item=>item.id!==card.id)]})); },
+    deleteExperience: id => set(state=>({experiences:state.experiences.filter(item=>item.id!==id)})),
+    clearSavedData: async () => { try { await storage.removeItem('eye-practice'); set({session:null,history:[],experiences:[],request:null,error:null,storageError:null}); } catch {report('Saved data could not be cleared. Check your browser storage settings.');} },
     session: null, history: [], request: null, error: null,
     start: (context, demo) => set({ session: { id: crypto.randomUUID(), createdAt: new Date().toISOString(), context: structuredClone(context), demo, stage: 'answering', answer1: '', answer2: '', followUp: null, feedback: null }, request: null, error: null }),
     editAnswer: (answer, text) => {
@@ -54,6 +68,12 @@ export function createTrainerStore() {
     failRequest: (token, message) => { if (get().request?.token === token) set({ request: null, error: message }); },
     cancelRequest: () => set({ request: null, error: null }),
     deleteAttempt: (id) => set(state => ({ history: state.history.filter(item => item.id !== id), session: state.session?.id === id ? null : state.session })),
+  }), {
+    name:'eye-practice',version:1,storage,skipHydration:true,
+    partialize: state => ({session:state.session,history:state.history,experiences:state.experiences}),
+    merge: (saved,current) => ({...current,...(saved as object),request:null,error:null}),
+    onRehydrateStorage: () => () => { store.setState({hydrated:true}); },
   }));
+  return store;
 }
 export type TrainerStore = ReturnType<typeof createTrainerStore>;
