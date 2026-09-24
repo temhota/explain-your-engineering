@@ -14,6 +14,10 @@ export function Recorder({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
+  const latestTranscript = useRef(onTranscript);
+  useEffect(() => {
+    latestTranscript.current = onTranscript;
+  }, [onTranscript]);
   useEffect(() => () => controller.current?.abort(), []);
   async function transcribe() {
     if (!recorder.blob) return;
@@ -36,7 +40,7 @@ export function Recorder({
       const body = await response.json();
       if (!response.ok)
         throw new Error(body.error?.message ?? "Transcription failed.");
-      if (!abort.signal.aborted) onTranscript(body.text);
+      if (!abort.signal.aborted) latestTranscript.current(body.text);
     } catch (e) {
       if (!abort.signal.aborted)
         setError(e instanceof Error ? e.message : "Transcription failed.");
