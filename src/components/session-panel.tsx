@@ -5,6 +5,7 @@ import { ArrowRight, Check, MessageSquare } from 'lucide-react';
 import { useTrainer } from '@/store/provider';
 import { demoAnswers, demoFollowUp, demoFeedback } from '@/lib/demo';
 import { Review } from './review';
+import { Recorder } from './recorder';
 import styles from './trainer.module.css';
 export function SessionPanel() {
   const session = useTrainer(s => s.session); const request = useTrainer(s => s.request); const error = useTrainer(s => s.error);
@@ -33,6 +34,7 @@ export function SessionPanel() {
     <div className={styles.steps}><span className={first ? styles.activeStep : ''}>01 · Your answer</span><span className={!first ? styles.activeStep : ''}>02 · Dig deeper</span><span>03 · Debrief</span></div>
     <div className={styles.question}><p className={styles.eyebrow}>{session.context.mode === 'technology' ? 'Technical practice' : 'Your experience'} / {first ? 'Main question' : 'Follow-up'}</p><h1>{first ? session.context.question : session.followUp}</h1></div>
     <div className={styles.card}><div className={styles.sectionHeading}><h2>Your answer</h2><span className={styles.pill}>{session.demo ? 'Example' : 'Text input'}</span></div>
+    {!session.demo && <Recorder key={`${session.id}-${first}`} disabled={!!request} onTranscript={text => { if (!answer || window.confirm("Replace the current answer with this transcript?")) edit(first ? 1 : 2, text); }}/>}
     <label className={styles.label} htmlFor="answer">{session.demo ? 'Read the example response' : 'Explain your thinking in English'}</label>
     <textarea id="answer" value={answer} readOnly={session.demo || !!request} maxLength={12000} placeholder="Start with your decision. Explain why, then give an example…" onChange={e => edit(first ? 1 : 2, e.target.value)} rows={8}/>
     <div className={styles.answerFooter}><span>{answer.trim().split(/\s+/).filter(Boolean).length} words · no perfect script needed</span>{session.demo && !answer && <button className={styles.secondary} onClick={() => edit(first ? 1 : 2, demoAnswers[first ? 0 : 1])}>Use example answer</button>}</div>
