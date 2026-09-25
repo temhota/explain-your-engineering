@@ -95,7 +95,10 @@ test("technology practice completes with a deterministic provider and repeats in
 }) => {
   await provider(page);
   await page.goto("/");
-  await page.getByRole("button", { name: "React", exact: true }).click();
+  await page
+    .locator("label")
+    .filter({ has: page.getByRole("radio", { name: "React", exact: true }) })
+    .click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -115,7 +118,7 @@ test("personal story survives reload and completes an experience interview", asy
 }) => {
   await provider(page);
   await page.goto("/");
-  await page.getByRole("button", { name: "My experience" }).click();
+  await page.getByRole("tab", { name: "My experience" }).click();
   await page.getByRole("button", { name: "Add a story" }).click();
   await page.getByLabel("Title", { exact: true }).fill("Offline drafts");
   await page
@@ -126,7 +129,7 @@ test("personal story survives reload and completes an experience interview", asy
     page.getByRole("button", { name: /^(Save story|Saving…)$/ }),
   ).toHaveCount(0);
   await page.reload();
-  await page.getByRole("button", { name: "My experience" }).click();
+  await page.getByRole("tab", { name: "My experience" }).click();
   await expect(
     page.getByRole("heading", { name: "Offline drafts" }),
   ).toBeVisible();
@@ -159,7 +162,12 @@ test("failed requests preserve answers and can be retried", async ({
     );
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "JavaScript" }).click();
+  await page
+    .locator("label")
+    .filter({
+      has: page.getByRole("radio", { name: "JavaScript", exact: true }),
+    })
+    .click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -240,7 +248,10 @@ test("records browser audio for playback", async ({ page, browserName }) => {
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "React", exact: true }).click();
+  await page
+    .locator("label")
+    .filter({ has: page.getByRole("radio", { name: "React", exact: true }) })
+    .click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -291,7 +302,10 @@ test("starting another practice requires confirmation before discarding a draft"
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "React", exact: true }).click();
+  await page
+    .locator("label")
+    .filter({ has: page.getByRole("radio", { name: "React", exact: true }) })
+    .click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -300,8 +314,11 @@ test("starting another practice requires confirmation before discarding a draft"
     .getByLabel("Explain your thinking in English")
     .fill("Keep this unfinished answer");
   await page.getByRole("link", { name: "Practice", exact: true }).click();
-  page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "Try the example" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Keep practising" })
+    .click();
   await expect(page).toHaveURL(/\/$/);
   await page
     .getByRole("link", { name: "Continue practice", exact: true })
@@ -312,8 +329,11 @@ test("starting another practice requires confirmation before discarding a draft"
     "Keep this unfinished answer",
   );
   await page.getByRole("link", { name: "Practice", exact: true }).click();
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Try the example" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Discard and start" })
+    .click();
   await expect(page.getByLabel("Read the example response")).toHaveValue("");
 });
 

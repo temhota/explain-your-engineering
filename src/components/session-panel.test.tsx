@@ -71,18 +71,16 @@ it("cancels the active operation when leaving the session screen", async () => {
 
 it("explains offline practice before recording and disables unavailable AI actions", async () => {
   const store = createTrainerStore();
-  store
-    .getState()
-    .start(
-      {
-        mode: "technology",
-        questionId: "js-closures",
-        version: 1,
-        title: "Closures",
-        question: "Explain a closure.",
-      },
-      false,
-    );
+  store.getState().start(
+    {
+      mode: "technology",
+      questionId: "js-closures",
+      version: 1,
+      title: "Closures",
+      question: "Explain a closure.",
+    },
+    false,
+  );
   render(
     <TrainerProvider store={store}>
       <SessionPanel live={false} />

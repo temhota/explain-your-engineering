@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Alert, Button, List, Radio, Tabs, Tag, Typography } from "antd";
 import { useStartPractice } from "@/hooks/use-start-practice";
 import { useState } from "react";
 import type { PublicQuestion, Topic } from "@/lib/questions";
@@ -15,8 +16,8 @@ export function Practice({
   questions: PublicQuestion[];
   live: boolean;
 }) {
-  const [mode, setMode] = useState<"technology" | "experience">("technology");
-  const [topic, setTopic] = useState<Topic | null>(null);
+  const [mode, setMode] = useState("technology");
+  const [topic, setTopic] = useState<Topic | "All">("All");
   const session = useTrainer((s) => s.session);
   const start = useStartPractice();
   const router = useRouter();
@@ -24,79 +25,75 @@ export function Practice({
     <>
       <header className={styles.pageHeading}>
         <div>
-          <h1>Practice</h1>
-          <p>Choose a question. Explain it in your own words.</p>
+          <Typography.Title level={2}>Practice</Typography.Title>
+          <Typography.Text type="secondary">
+            Choose a question and explain your reasoning in English.
+          </Typography.Text>
         </div>
-        <button
-          className={styles.textButton}
-          onClick={() => {
-            if (start(demoContext, true)) router.push("/session");
+        <Button
+          onClick={async () => {
+            if (await start(demoContext, true)) router.push("/session");
           }}
         >
           Try the example
-        </button>
+        </Button>
       </header>
       {session && session.stage !== "complete" && (
-        <p className={styles.resume}>
-          Unfinished practice: {session.context.title}.{" "}
-          <Link href="/session">Continue your answer</Link>
-        </p>
+        <Alert
+          className={styles.notice}
+          showIcon
+          type="info"
+          title={
+            <>
+              Unfinished practice: {session.context.title}.{" "}
+              <Link href="/session">Continue your answer</Link>
+            </>
+          }
+        />
       )}
-      <div className={styles.tabs} role="group" aria-label="Practice mode">
-        <button
-          aria-pressed={mode === "technology"}
-          onClick={() => setMode("technology")}
-        >
-          Technology questions
-        </button>
-        <button
-          aria-pressed={mode === "experience"}
-          onClick={() => setMode("experience")}
-        >
-          My experience
-        </button>
-      </div>
+      <Tabs
+        activeKey={mode}
+        onChange={setMode}
+        items={[
+          { key: "technology", label: "Technology questions" },
+          { key: "experience", label: "My experience" },
+        ]}
+      />
       {!live && (
-        <p className={styles.notice}>
-          Text practice only here. Recording and AI feedback require a local API
-          setup. The example includes a prepared review.
-        </p>
+        <Alert
+          className={styles.notice}
+          type="info"
+          showIcon
+          title="Text practice only here"
+          description="Recording and AI feedback require a local API setup. The example includes a prepared review."
+        />
       )}
       {mode === "experience" ? (
         <Experiences onPractice={() => router.push("/session")} />
       ) : (
         <>
-          <div className={styles.filter} role="group" aria-label="Technology">
-            {([null, "JavaScript", "TypeScript", "React"] as const).map(
-              (value) => (
-                <button
-                  key={value ?? "all"}
-                  aria-pressed={topic === value}
-                  onClick={() => setTopic(value)}
-                >
-                  {value ?? "All"}
-                </button>
-              ),
+          <Radio.Group
+            className={styles.filter}
+            aria-label="Technology"
+            optionType="button"
+            buttonStyle="solid"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            options={["All", "JavaScript", "TypeScript", "React"]}
+          />
+          <List
+            dataSource={questions.filter(
+              (q) => topic === "All" || q.topic === topic,
             )}
-          </div>
-          <div className={styles.list}>
-            {questions
-              .filter((q) => !topic || q.topic === topic)
-              .map((q, index) => (
-                <article key={q.id} className={styles.listItem}>
-                  <span className={styles.rowNumber} aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className={styles.rowContent}>
-                    <p className={styles.meta}>{q.topic}</p>
-                    <h2>{q.title}</h2>
-                    <p>{q.question}</p>
-                  </div>
-                  <button
-                    className={styles.secondary}
-                    onClick={() => {
+            rowKey="id"
+            renderItem={(q) => (
+              <List.Item
+                className={styles.listItem}
+                extra={
+                  <Button
+                    onClick={async () => {
                       if (
-                        start(
+                        await start(
                           {
                             mode: "technology",
                             questionId: q.id,
@@ -111,10 +108,21 @@ export function Practice({
                     }}
                   >
                     Practise
-                  </button>
-                </article>
-              ))}
-          </div>
+                  </Button>
+                }
+              >
+                <List.Item.Meta
+                  title={
+                    <>
+                      <Tag>{q.topic}</Tag>
+                      <Typography.Text strong>{q.title}</Typography.Text>
+                    </>
+                  }
+                  description={q.question}
+                />
+              </List.Item>
+            )}
+          />
         </>
       )}
     </>

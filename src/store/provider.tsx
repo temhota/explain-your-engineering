@@ -1,4 +1,6 @@
 "use client";
+import { Alert, Button, Spin } from "antd";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   createContext,
   useContext,
@@ -30,40 +32,50 @@ export function TrainerProvider({
     </StoreContext.Provider>
   );
 }
-export function useTrainer<T>(selector: (state: TrainerState) => T): T {
+export function useTrainerApi() {
   const store = useContext(StoreContext);
   if (!store) throw new Error("TrainerProvider is missing.");
-  return useStore(store, selector);
+  return store;
+}
+export function useTrainer<T>(selector: (state: TrainerState) => T): T {
+  return useStore(useTrainerApi(), selector);
 }
 
 function Hydrated({ children }: { children: ReactNode }) {
   const ready = useTrainer((s) => s.hydrated);
   const error = useTrainer((s) => s.storageError);
   const clear = useTrainer((s) => s.clearSavedData);
+  const confirm = useConfirm();
   if (!ready)
     return (
-      <p role="status" style={{ padding: 32 }}>
-        Opening your practice room…
-      </p>
+      <div role="status" style={{ padding: 32 }}>
+        <Spin /> Opening your practice…
+      </div>
     );
   return (
     <>
       {error && (
-        <div role="alert" style={{ padding: 16, background: "#fff1db" }}>
-          {error}{" "}
-          <button
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Clear all saved cards, drafts and history in this browser?",
+        <Alert
+          type="warning"
+          showIcon
+          title={error}
+          action={
+            <Button
+              onClick={async () => {
+                if (
+                  await confirm(
+                    "Clear saved data?",
+                    "This deletes all cards, drafts and history in this browser.",
+                    "Clear data",
+                  )
                 )
-              )
-                void clear();
-            }}
-          >
-            Clear saved data
-          </button>
-        </div>
+                  await clear();
+              }}
+            >
+              Clear saved data
+            </Button>
+          }
+        />
       )}
       {children}
     </>

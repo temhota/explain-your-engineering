@@ -35,7 +35,7 @@ it("shows questions immediately and filters without an extra selection screen", 
   expect(screen.getByText("When do you need an effect?")).toBeVisible();
   await userEvent
     .setup()
-    .click(screen.getByRole("button", { name: "React" }));
+    .click(screen.getByRole("radio", { name: "React" }).closest("label")!);
   expect(screen.queryByText("Explain a closure.")).not.toBeInTheDocument();
   expect(screen.getByText("When do you need an effect?")).toBeVisible();
 });

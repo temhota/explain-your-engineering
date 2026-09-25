@@ -1,3 +1,6 @@
+import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { UIProvider } from "@/components/ui-provider";
+import "antd/dist/reset.css";
 import type { Metadata } from "next";
 import { TrainerProvider } from "@/store/provider";
 import { Shell } from "@/components/shell";
@@ -16,9 +19,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TrainerProvider>
-          <Shell live={process.env.AI_ENABLED === "true"}>{children}</Shell>
-        </TrainerProvider>
+        <AntdRegistry>
+          <UIProvider>
+            <TrainerProvider>
+              <Shell live={process.env.AI_ENABLED === "true"}>{children}</Shell>
+            </TrainerProvider>
+          </UIProvider>
+        </AntdRegistry>
       </body>
     </html>
   );

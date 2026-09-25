@@ -2,8 +2,9 @@
 import { useStartPractice } from "@/hooks/use-start-practice";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { ArrowRight, Check } from "lucide-react";
-import { useTrainer } from "@/store/provider";
+import { Alert, Button, Collapse, Input, Space, Tag, Typography } from "antd";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useTrainer, useTrainerApi } from "@/store/provider";
 import { demoAnswers, demoFollowUp, demoFeedback } from "@/lib/demo";
 import { Review } from "./review";
 import { Recorder } from "./recorder";
@@ -20,6 +21,8 @@ export function SessionPanel({ live = true }: { live?: boolean }) {
   const fail = useTrainer((s) => s.failRequest);
   const cancel = useTrainer((s) => s.cancelRequest);
   const start = useStartPractice();
+  const ask = useConfirm();
+  const store = useTrainerApi();
   const abort = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
@@ -31,11 +34,9 @@ export function SessionPanel({ live = true }: { live?: boolean }) {
   if (!session)
     return (
       <section className={styles.empty}>
-        <h1>No practice in progress</h1>
+        <Typography.Title level={2}>No practice in progress</Typography.Title>
         <p>Choose a question or an experience to begin.</p>
-        <Link className={styles.primary} href="/">
-          Choose a practice <ArrowRight size={16} />
-        </Link>
+        <Link href="/">Choose a practice</Link>
       </section>
     );
   const first =
@@ -75,198 +76,220 @@ export function SessionPanel({ live = true }: { live?: boolean }) {
   }
   if (session.stage === "complete")
     return (
-      <>
+      <div className={styles.sessionLayout}>
         <Review session={session} />
-        <div className={styles.actions}>
-          <button
-            className={styles.primary}
-            onClick={() => start(session.context, session.demo)}
+        <Space className={styles.actions} wrap>
+          <Button
+            type="primary"
+            onClick={() => void start(session.context, session.demo)}
           >
-            Try this question again <ArrowRight size={16} />
-          </button>
-          <Link href="/history" className={styles.secondary}>
-            View history
-          </Link>
-        </div>
-      </>
+            Try this question again
+          </Button>
+          <Link href="/history">View history</Link>
+        </Space>
+      </div>
     );
   return (
     <div className={styles.sessionLayout}>
-      <section>
-        {session.demo && (
-          <p className={styles.notice}>
-            <strong>Scripted example.</strong> Fictional answers and a prepared
-            review show the full experience. No AI requests are made.
-          </p>
-        )}
-        {!session.demo && !live && (
-          <p className={styles.notice}>
-            Text practice only. Recording and AI feedback are unavailable in
-            this deployment. Your answer is saved in this browser.
-          </p>
-        )}
-        <div className={styles.question}>
-          <p className={styles.eyebrow}>
+      {session.demo && (
+        <Alert
+          className={styles.notice}
+          type="info"
+          showIcon
+          title="Scripted example"
+          description="Fictional answers and a prepared review. No AI requests are made."
+        />
+      )}
+      {!session.demo && !live && (
+        <Alert
+          className={styles.notice}
+          type="info"
+          showIcon
+          title="Text practice only"
+          description="Recording and AI feedback are unavailable in this deployment. Your answer is saved in this browser."
+        />
+      )}
+      <div className={styles.question}>
+        <Space wrap>
+          <Tag color="blue">
             {session.context.mode === "technology"
-              ? "Technical practice"
-              : "Your experience"}{" "}
-            / {first ? "Question 1 of 2" : "Question 2 of 2"}
-          </p>
-          <h1>{first ? session.context.question : session.followUp}</h1>
-        </div>
-        <div className={styles.card}>
-          {!session.demo &&
-            live &&
-            (session.stage === "answering" ||
-              session.stage === "answering-follow-up") && (
-              <Recorder
-                key={`${session.id}-${first}`}
-                disabled={!!request}
-                onTranscript={(text) => {
-                  if (
-                    !answer ||
-                    window.confirm(
-                      "Replace the current answer with this transcript?",
-                    )
-                  )
-                    edit(first ? 1 : 2, text);
-                }}
-              />
-            )}
-          <label className={styles.label} htmlFor="answer">
-            {session.demo
-              ? "Read the example response"
-              : "Explain your thinking in English"}
-          </label>
-          <textarea
-            id="answer"
-            value={answer}
-            readOnly={session.demo || !!request}
-            maxLength={12000}
-            placeholder="Start with your decision. Explain why, then give an example…"
-            onChange={(e) => edit(first ? 1 : 2, e.target.value)}
-            rows={7}
-          />
-          <div className={styles.answerFooter}>
-            <span>
-              {answer.trim().split(/\s+/).filter(Boolean).length} words
-            </span>
-            {session.demo && !answer && (
-              <button
-                className={styles.secondary}
-                onClick={() => edit(first ? 1 : 2, demoAnswers[first ? 0 : 1])}
-              >
-                Use example answer
-              </button>
-            )}
-          </div>
-          {!session.demo && live && (
-            <div className={styles.privacy}>
-              <p>
-                AI requests send your answers and selected experience card to
-                OpenAI. Transcription sends audio.
-              </p>
-              <details>
-                <summary>Data use</summary>
-                <p>
-                  Use non-confidential examples. Deleting browser data does not
-                  delete provider-held data.{" "}
-                  <a
-                    href="https://developers.openai.com/api/docs/guides/your-data"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    OpenAI data policy
-                  </a>
-                  .
-                </p>
-              </details>
-            </div>
-          )}
-          <div className={styles.actions}>
-            {(session.stage === "answering" ||
-              session.stage === "answering-follow-up") && (
-              <button
-                className={styles.primary}
-                disabled={!answer.trim()}
-                onClick={confirm}
-              >
-                Confirm answer <Check size={16} />
-              </button>
-            )}
-            {session.stage === "ready-follow-up" && (
-              <button
-                className={styles.primary}
-                disabled={!!request || (!session.demo && !live)}
-                onClick={() => generate("follow-up")}
-              >
-                {request
-                  ? "Preparing your question…"
-                  : session.demo
-                    ? "Show follow-up"
-                    : "Get follow-up"}{" "}
-                <ArrowRight size={16} />
-              </button>
-            )}
-            {session.stage === "ready-feedback" && (
-              <button
-                className={styles.primary}
-                disabled={!!request || (!session.demo && !live)}
-                onClick={() => generate("feedback")}
-              >
-                {request
-                  ? "Reviewing your answers…"
-                  : session.demo
-                    ? "Show example review"
-                    : "Review my answers"}{" "}
-                <ArrowRight size={16} />
-              </button>
-            )}
-            {request && (
-              <button
-                className={styles.secondary}
-                onClick={() => {
-                  abort.current?.abort();
-                  cancel();
-                }}
-              >
-                Cancel request
-              </button>
-            )}
-          </div>
-          {error && (
-            <p role="alert" className={styles.error}>
-              {error}
-            </p>
-          )}
-        </div>
-        <details className={styles.previous}>
-          <summary>Answering tips</summary>
-          <p>
-            State your answer, explain the reasoning, then give a concrete
-            example. If you are unsure, say what you would check.
-          </p>
-        </details>
-        {!first && (
-          <details className={styles.previous}>
-            <summary>Revisit your first answer</summary>
-            <p>{session.answer1}</p>
-            <button
-              className={styles.secondary}
-              onClick={() => {
+              ? "Technology"
+              : "Your experience"}
+          </Tag>
+          <Typography.Text type="secondary">
+            {first ? "Question 1 of 2" : "Question 2 of 2"}
+          </Typography.Text>
+        </Space>
+        <Typography.Title level={2}>
+          {first ? session.context.question : session.followUp}
+        </Typography.Title>
+      </div>
+      {!session.demo &&
+        live &&
+        (session.stage === "answering" ||
+          session.stage === "answering-follow-up") && (
+          <Recorder
+            key={`${session.id}-${first}`}
+            disabled={!!request}
+            onTranscript={async (text) => {
+              if (
+                !answer ||
+                (await ask(
+                  "Replace your answer?",
+                  "The transcript will replace the text you have entered.",
+                  "Use transcript",
+                  "Keep text",
+                ))
+              ) {
+                const latest = store.getState().session;
                 if (
-                  window.confirm(
-                    "Editing the first answer clears the follow-up and second answer. Continue?",
-                  )
+                  latest?.id === session.id &&
+                  (first ? latest.answer1 : latest.answer2) === answer
                 )
-                  edit(1, session.answer1);
-              }}
-            >
-              Edit first answer
-            </button>
-          </details>
+                  edit(first ? 1 : 2, text);
+              }
+            }}
+          />
         )}
-      </section>
+      <label className={styles.label} htmlFor="answer">
+        {session.demo
+          ? "Read the example response"
+          : "Explain your thinking in English"}
+      </label>
+      <Input.TextArea
+        id="answer"
+        value={answer}
+        readOnly={session.demo || !!request}
+        maxLength={12000}
+        placeholder="Your answer…"
+        onChange={(e) => edit(first ? 1 : 2, e.target.value)}
+        rows={8}
+      />
+      <div className={styles.answerFooter}>
+        <Typography.Text type="secondary">
+          {answer.trim().split(/\s+/).filter(Boolean).length} words
+        </Typography.Text>
+        {session.demo && !answer && (
+          <Button
+            onClick={() => edit(first ? 1 : 2, demoAnswers[first ? 0 : 1])}
+          >
+            Use example answer
+          </Button>
+        )}
+      </div>
+      {!session.demo && live && (
+        <Typography.Paragraph type="secondary" className={styles.privacy}>
+          AI requests send your answers and selected experience card to OpenAI.
+          Transcription sends audio.
+        </Typography.Paragraph>
+      )}
+      <Space className={styles.actions} wrap>
+        {(session.stage === "answering" ||
+          session.stage === "answering-follow-up") && (
+          <Button type="primary" disabled={!answer.trim()} onClick={confirm}>
+            Confirm answer
+          </Button>
+        )}
+        {session.stage === "ready-follow-up" && (
+          <Button
+            type="primary"
+            loading={!!request}
+            disabled={!!request || (!session.demo && !live)}
+            onClick={() => generate("follow-up")}
+          >
+            {session.demo ? "Show follow-up" : "Get follow-up"}
+          </Button>
+        )}
+        {session.stage === "ready-feedback" && (
+          <Button
+            type="primary"
+            loading={!!request}
+            disabled={!!request || (!session.demo && !live)}
+            onClick={() => generate("feedback")}
+          >
+            {session.demo ? "Show example review" : "Review my answers"}
+          </Button>
+        )}
+        {request && (
+          <Button
+            onClick={() => {
+              abort.current?.abort();
+              cancel();
+            }}
+          >
+            Cancel request
+          </Button>
+        )}
+      </Space>
+      {error && (
+        <Alert className={styles.notice} type="error" showIcon title={error} />
+      )}
+      <Collapse
+        className={styles.details}
+        items={[
+          {
+            key: "tips",
+            label: "Answering tips",
+            children: (
+              <p>
+                State your answer, explain the reasoning, then give a concrete
+                example. If you are unsure, say what you would check.
+              </p>
+            ),
+          },
+          ...(!session.demo && live
+            ? [
+                {
+                  key: "privacy",
+                  label: "Data use",
+                  children: (
+                    <p>
+                      Use non-confidential examples. Deleting browser data does
+                      not delete provider-held data.{" "}
+                      <a
+                        href="https://developers.openai.com/api/docs/guides/your-data"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        OpenAI data policy
+                      </a>
+                      .
+                    </p>
+                  ),
+                },
+              ]
+            : []),
+          ...(!first
+            ? [
+                {
+                  key: "first",
+                  label: "Revisit your first answer",
+                  children: (
+                    <>
+                      <p className={styles.transcript}>{session.answer1}</p>
+                      <Button
+                        onClick={async () => {
+                          if (
+                            await ask(
+                              "Edit the first answer?",
+                              "This clears the follow-up, second answer and review.",
+                              "Edit answer",
+                            )
+                          ) {
+                            if (store.getState().session?.id === session.id)
+                              edit(1, session.answer1);
+                          }
+                        }}
+                      >
+                        Edit first answer
+                      </Button>
+                    </>
+                  ),
+                },
+              ]
+            : []),
+        ]}
+      />
     </div>
   );
 }

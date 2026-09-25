@@ -1,15 +1,20 @@
 "use client";
+import { useConfirm } from "./use-confirm";
 import { useTrainer } from "@/store/provider";
 import type { Context } from "@/lib/domain";
 
 export function useStartPractice() {
   const start = useTrainer((state) => state.start);
-  return (context: Context, demo: boolean) => {
+  const confirm = useConfirm();
+  return async (context: Context, demo: boolean) => {
     if (start(context, demo)) return true;
     if (
-      !window.confirm(
-        "Discard your unfinished practice and start a new one? Cancel keeps your current answer.",
-      )
+      !(await confirm(
+        "Start a new practice?",
+        "Your unfinished answer will be discarded.",
+        "Discard and start",
+        "Keep practising",
+      ))
     )
       return false;
     return start(context, demo, true);

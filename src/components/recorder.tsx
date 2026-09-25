@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square } from "lucide-react";
+import { Button, Alert } from "antd";
+import { AudioOutlined, StopOutlined } from "@ant-design/icons";
 import { useRecorder } from "@/hooks/use-recorder";
 import styles from "./trainer.module.css";
 export function Recorder({
@@ -51,55 +52,50 @@ export function Recorder({
   return (
     <div className={styles.recording}>
       {recorder.status === "recording" ? (
-        <button className={styles.secondary} onClick={recorder.stop}>
-          <Square size={15} />
+        <Button onClick={recorder.stop}>
+          <StopOutlined />
           Stop · {recorder.seconds}s / 180s
-        </button>
+        </Button>
       ) : (
-        <button
-          className={styles.secondary}
+        <Button
           disabled={disabled || pending || recorder.status === "requesting"}
           onClick={() => void recorder.start()}
         >
-          <Mic size={16} />
+          <AudioOutlined />
           {recorder.status === "requesting"
             ? "Waiting for microphone…"
             : recorder.blob
               ? "Record again"
               : "Record an answer"}
-        </button>
+        </Button>
       )}
       {recorder.url && (
         <audio controls src={recorder.url} aria-label="Your recorded answer" />
       )}
       {recorder.blob && (
-        <button
-          className={styles.secondary}
+        <Button
           disabled={pending || disabled}
           onClick={() => void transcribe()}
         >
           {pending ? "Transcribing…" : "Transcribe recording"}
-        </button>
+        </Button>
       )}
       {pending && (
-        <button
-          className={styles.secondary}
+        <Button
           onClick={() => {
             controller.current?.abort();
             setPending(false);
           }}
         >
           Cancel transcription
-        </button>
+        </Button>
       )}
       <p className={styles.muted}>
         Up to 3 minutes. Transcribe sends audio to OpenAI. Review the text
         before confirming.
       </p>
       {(error || recorder.error) && (
-        <p role="alert" className={styles.error}>
-          {error || recorder.error}
-        </p>
+        <Alert type="error" showIcon title={error || recorder.error} />
       )}
     </div>
   );
