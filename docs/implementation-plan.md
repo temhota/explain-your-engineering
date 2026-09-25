@@ -1,6 +1,6 @@
 # Explain Your Engineering implementation plan
 
-Spec: design.md. Approved Next.js/Zustand plan. Assistant implements; Anna directs and reviews. Stage branches are stacked until user review; no automatic merge to main.
+Spec: design.md. Approved Next.js/Zustand plan. Implementation proceeds in stages with review before merging. Stage branches are stacked until user review; no automatic merge to main.
 
 ## Task 1: Text practice foundation
 Create per-provider Zustand store, explicit session transitions, client shell and deterministic fictional demonstration. Verify isolation, invalid transitions, stale results and the full text flow.

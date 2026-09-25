@@ -46,7 +46,7 @@ export function Shell({
         </nav>
         <div className={styles.sidebarFooter}>
           <span className={styles.statusDot} />
-          {live ? "Personal practice" : "Portfolio preview"}
+          {live ? "Personal practice" : "Demo mode"}
           <p>
             A small space to find
             <br />

@@ -84,6 +84,6 @@ Public live-AI access is outside this version's scope: it would require authenti
 
 ## Project background
 
-A personal portfolio project shaped around a real interview-preparation need. Anna selected the product direction, Next.js and Zustand; implementation was developed with AI assistance. Small feature commits and staged review make the decisions and validation inspectable.
+A technical interview trainer built around practical interview preparation. Implementation was developed with AI assistance. Small feature commits and staged review make the decisions and validation inspectable.
 
 This is a learning project, not a validated interviewer or a production hiring system. It does not grade accent, predict hiring outcomes or verify personal career claims.

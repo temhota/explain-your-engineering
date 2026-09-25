@@ -2,9 +2,9 @@
 
 Implementation checks, 24 September 2026:
 
-- 22 Vitest unit/component/API tests passed.
+- 23 Vitest unit/component/API tests passed.
 - TypeScript, ESLint and Next.js production build passed.
-- Playwright: 13 passed, 1 explicitly skipped across Chromium and WebKit.
+- Playwright: 15 passed, 1 explicitly skipped across Chromium and WebKit.
 - Both text workflows use deterministic API responses in browser tests; server validation has separate tests.
 - The scripted walkthrough completes and survives reload without an API call.
 - Chromium recording uses a generated audio MediaStream and the actual MediaRecorder/blob path. A Chromium MediaStreamTrackGenerator supplies samples because the host audio service stalls; the test deliberately isolates device access. Playback controls are verified, not audible speaker output.
