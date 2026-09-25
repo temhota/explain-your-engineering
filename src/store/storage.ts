@@ -15,11 +15,21 @@ export interface StorageSource {
 export function guardedStorage(
   source: StorageSource,
   report: (message: string) => void,
-): PersistStorage<SavedState> {
+): PersistStorage<SavedState> & { flush: () => Promise<void> } {
+  let pending = Promise.resolve();
+  let lastFailure: string | null = null;
+  const failed = (message: string) => {
+    lastFailure = message;
+    report(message);
+  };
   let locked = false;
   let baseline: string | null = null;
   let loaded = false;
   return {
+    flush: async () => {
+      await pending;
+      if (lastFailure) throw new Error(lastFailure);
+    },
     getItem: (name) => {
       try {
         const raw = source.getItem(name);
@@ -32,7 +42,7 @@ export function guardedStorage(
         return envelope;
       } catch {
         locked = true;
-        report(
+        failed(
           "Saved browser data could not be restored. Existing data has not been overwritten. Clear saved data to start again.",
         );
         return null;
@@ -44,7 +54,7 @@ export function guardedStorage(
         try {
           if (source.getItem(name) !== baseline) {
             locked = true;
-            report(
+            failed(
               "Saved data changed in another tab. Saving is paused in this tab to protect those changes. Copy your unsaved text before reloading; practise in one tab at a time.",
             );
             return;
@@ -52,8 +62,9 @@ export function guardedStorage(
           const serialized = JSON.stringify(value);
           source.setItem(name, serialized);
           baseline = serialized;
+          lastFailure = null;
         } catch {
-          report(
+          failed(
             "Your latest changes could not be saved in this browser. Keep this tab open and free some storage.",
           );
         }
@@ -64,13 +75,14 @@ export function guardedStorage(
         typeof navigator !== "undefined" &&
         navigator.locks
       ) {
-        return navigator.locks
+        pending = navigator.locks
           .request(name, write)
           .catch(() =>
-            report(
+            failed(
               "Browser storage is unavailable. Keep this tab open to retain your changes.",
             ),
           );
+        return pending;
       }
       write();
     },
@@ -79,6 +91,7 @@ export function guardedStorage(
       baseline = null;
       loaded = true;
       locked = false;
+      lastFailure = null;
     },
   };
 }

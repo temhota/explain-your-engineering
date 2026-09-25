@@ -14,7 +14,7 @@ export interface TrainerState {
   hydrated: boolean;
   storageError: string | null;
   experiences: Experience[];
-  saveExperience: (card: Experience) => void;
+  saveExperience: (card: Experience) => Promise<void>;
   deleteExperience: (id: string) => void;
   clearSavedData: () => Promise<void>;
   session: Session | null;
@@ -45,7 +45,7 @@ export function createTrainerStore(source: StorageSource = browserStorage) {
         hydrated: false,
         storageError: null,
         experiences: [],
-        saveExperience: (card) => {
+        saveExperience: async (card) => {
           const parsed = experienceSchema.parse(card);
           set((state) => ({
             experiences: [
@@ -53,6 +53,8 @@ export function createTrainerStore(source: StorageSource = browserStorage) {
               ...state.experiences.filter((item) => item.id !== card.id),
             ],
           }));
+          await storage.flush();
+          if (get().storageError) set({ storageError: null });
         },
         deleteExperience: (id) =>
           set((state) => ({
