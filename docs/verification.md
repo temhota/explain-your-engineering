@@ -2,9 +2,9 @@
 
 Implementation checks, 24 September 2026:
 
-- 23 Vitest unit/component/API tests passed.
+- 27 Vitest unit/component/API tests passed.
 - TypeScript, ESLint and Next.js production build passed.
-- Playwright: 15 passed, 1 explicitly skipped across Chromium and WebKit.
+- Playwright: 17 passed, 1 explicitly skipped across Chromium and WebKit.
 - Both text workflows use deterministic API responses in browser tests; server validation has separate tests.
 - The scripted walkthrough completes and survives reload without an API call.
 - Chromium recording uses a generated audio MediaStream and the actual MediaRecorder/blob path. A Chromium MediaStreamTrackGenerator supplies samples because the host audio service stalls; the test deliberately isolates device access. Playback controls are verified, not audible speaker output.
@@ -20,3 +20,5 @@ Implementation checks, 24 September 2026:
 Do not describe these missing checks as passed or the project as production-ready. The walkthrough video records the labelled scripted example, not a live AI session.
 
 Independent review found and verified fixes for late transcripts overwriting typed text, cross-tab storage conflicts, incomplete provider disclosure, and multipart size enforcement. Regression tests cover the first two and oversized request bodies.
+
+Notebook UI checks, 25 September 2026: immediate question list and filters, compact navigation, optional experience fields, one-column answers, public AI controls disabled before recording, and confirmed persistence before closing the experience form. Mobile inspection at 390 px found no horizontal overflow; the text area begins around 400 px from the top.

@@ -53,3 +53,9 @@ The fixture is a product walkthrough, not a hidden replacement for an AI service
 ## Concurrent tabs
 
 Each storage adapter remembers the exact envelope it read or last wrote. Before a write, it compares the current envelope and pauses saving if another tab changed it. Current edits remain in memory with a visible warning. Web Locks serialize this comparison and write in supported browsers; the synchronous comparison remains a best-effort fallback elsewhere. This is conflict protection, not collaborative editing. Use one practice tab at a time.
+
+## UI availability and saving
+
+The server passes AI availability to the session view. Public mode supports written drafts and the scripted example; recording and live-analysis actions are unavailable. Pages read this setting at request time.
+
+Experience saves await the storage adapter’s pending Web Lock write before the form closes. The form remains disabled during this short operation; errors preserve the draft. Browser tests wait for durable persistence before intentionally reloading a completed session.

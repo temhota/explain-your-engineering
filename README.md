@@ -1,8 +1,8 @@
 # Explain Your Engineering
 
-**You know your craft. Find the words for it.**
+**Practise explaining technical decisions in English.**
 
-A technical interview practice room for engineers who want to explain decisions clearly, handle a thoughtful follow-up, and learn from the next attempt.
+A focused interview notebook: choose a question, explain your reasoning, answer one follow-up, and review the attempt.
 
 ![Practice room](docs/screenshots/practice.png)
 
@@ -13,7 +13,7 @@ Choose **Technology** for twelve JavaScript, TypeScript and React questions, or 
 ## Two ways to explore
 
 - **Scripted example:** a fictional React interview with prepared answers and feedback. Works without an account or API key; labelled throughout. It does not evaluate arbitrary text.
-- **Personal practice:** run locally with your own server-side OpenAI key for real transcription, follow-ups and feedback. The public configuration disables all live AI endpoints.
+- **Personal practice:** run locally with your own server-side OpenAI key for real transcription, follow-ups and feedback. The public configuration disables all live AI endpoints and hides recording. You can still write and save an answer, or try the scripted example.
 
 Cards, transcripts and reviews are saved in this browser. Live practice sends selected context and confirmed answers to OpenAI. There is no account, cross-device sync, leaderboard or hiring score. Audio is available for playback only during the current answer and is not stored in history.
 
@@ -72,7 +72,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-Unit/component tests cover state isolation, invalid transitions, persistence failure, quote validation, disabled APIs and microphone denial. Browser tests cover both practice modes, reload, history and retry with deterministic responses. Chromium audio tests use a generated MediaStreamTrackGenerator audio with the real browser MediaRecorder; they do not prove a physical microphone works. WebKit tests do not substitute for Safari device testing.
+Unit/component tests cover state isolation, invalid transitions, persistence failure, quote validation, disabled APIs and microphone denial. Browser tests run two production servers: one with AI controls enabled and deterministic intercepted responses, and one with live AI disabled. They cover both practice modes, reload, history, retry, and the public controls. Build before running the browser tests. Chromium audio tests use a generated MediaStreamTrackGenerator audio with the real browser MediaRecorder; they do not prove a physical microphone works. WebKit tests do not substitute for Safari device testing.
 
 Current evidence and remaining live checks are listed in [verification status](docs/verification.md).
 
