@@ -254,3 +254,33 @@ test("a stale tab cannot overwrite a newer saved answer", async ({
     "",
   );
 });
+
+test("starting another practice requires confirmation before discarding a draft", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Explore React", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Practise", exact: true })
+    .first()
+    .click();
+  await page
+    .getByLabel("Explain your thinking in English")
+    .fill("Keep this unfinished answer");
+  await page.getByRole("link", { name: "Practice", exact: true }).click();
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("button", { name: "Try the example" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByRole("link", { name: "Your session", exact: true }).click();
+  await expect(page).toHaveURL(/\/session$/);
+  await page.reload();
+  await expect(page.getByLabel("Explain your thinking in English")).toHaveValue(
+    "Keep this unfinished answer",
+  );
+  await page.getByRole("link", { name: "Practice", exact: true }).click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Try the example" }).click();
+  await expect(page.getByLabel("Read the example response")).toHaveValue("");
+});

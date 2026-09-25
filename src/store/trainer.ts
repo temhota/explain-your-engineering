@@ -21,7 +21,7 @@ export interface TrainerState {
   history: Session[];
   request: { token: string; operation: Operation } | null;
   error: string | null;
-  start: (context: Context, demo: boolean) => void;
+  start: (context: Context, demo: boolean, replace?: boolean) => boolean;
   editAnswer: (answer: 1 | 2, text: string) => void;
   confirmAnswer: () => void;
   beginRequest: (operation: Operation) => string;
@@ -79,7 +79,17 @@ export function createTrainerStore(source: StorageSource = browserStorage) {
         history: [],
         request: null,
         error: null,
-        start: (context, demo) =>
+        start: (context, demo, replace = false) => {
+          const current = get().session;
+          if (
+            !replace &&
+            current &&
+            current.stage !== "complete" &&
+            (current.answer1.trim() ||
+              current.answer2.trim() ||
+              current.followUp)
+          )
+            return false;
           set({
             session: {
               id: crypto.randomUUID(),
@@ -94,7 +104,9 @@ export function createTrainerStore(source: StorageSource = browserStorage) {
             },
             request: null,
             error: null,
-          }),
+          });
+          return true;
+        },
         editAnswer: (answer, text) => {
           const session = get().session;
           if (!session) return;

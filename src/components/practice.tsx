@@ -1,10 +1,10 @@
 "use client";
+import { useStartPractice } from "@/hooks/use-start-practice";
 import { useState } from "react";
 import type { PublicQuestion, Topic } from "@/lib/questions";
 import { Experiences } from "./experiences";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import { useTrainer } from "@/store/provider";
 import { demoContext } from "@/lib/demo";
 import styles from "./trainer.module.css";
 export function Practice({
@@ -16,11 +16,10 @@ export function Practice({
 }) {
   const [mode, setMode] = useState<"technology" | "experience">("technology");
   const [topic, setTopic] = useState<Topic | null>(null);
-  const start = useTrainer((s) => s.start);
+  const start = useStartPractice();
   const router = useRouter();
   const launch = () => {
-    start(demoContext, true);
-    router.push("/session");
+    if (start(demoContext, true)) router.push("/session");
   };
   return (
     <>
@@ -142,17 +141,19 @@ export function Practice({
                     <button
                       className={styles.secondary}
                       onClick={() => {
-                        start(
-                          {
-                            mode: "technology",
-                            questionId: q.id,
-                            version: q.version,
-                            title: q.title,
-                            question: q.question,
-                          },
-                          false,
-                        );
-                        router.push("/session");
+                        if (
+                          start(
+                            {
+                              mode: "technology",
+                              questionId: q.id,
+                              version: q.version,
+                              title: q.title,
+                              question: q.question,
+                            },
+                            false,
+                          )
+                        )
+                          router.push("/session");
                       }}
                     >
                       Practise <ArrowRight size={14} />

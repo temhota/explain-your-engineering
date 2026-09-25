@@ -1,4 +1,5 @@
 "use client";
+import { useStartPractice } from "@/hooks/use-start-practice";
 import { useState } from "react";
 import { Plus, ArrowRight } from "lucide-react";
 import { useTrainer } from "@/store/provider";
@@ -25,7 +26,7 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
   const cards = useTrainer((s) => s.experiences);
   const save = useTrainer((s) => s.saveExperience);
   const remove = useTrainer((s) => s.deleteExperience);
-  const start = useTrainer((s) => s.start);
+  const start = useStartPractice();
   const [draft, setDraft] = useState<Experience | null>(null);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -119,16 +120,18 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
               <button
                 className={styles.primary}
                 onClick={() => {
-                  start(
-                    {
-                      mode: "experience",
-                      title: card.title,
-                      question: `Walk me through a technical decision you made while working on ${card.title}. Explain your role, the alternatives and the trade-off.`,
-                      experience: card,
-                    },
-                    false,
-                  );
-                  onPractice();
+                  if (
+                    start(
+                      {
+                        mode: "experience",
+                        title: card.title,
+                        question: `Walk me through a technical decision you made while working on ${card.title}. Explain your role, the alternatives and the trade-off.`,
+                        experience: card,
+                      },
+                      false,
+                    )
+                  )
+                    onPractice();
                 }}
               >
                 Practise <ArrowRight size={14} />

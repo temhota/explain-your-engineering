@@ -1,4 +1,5 @@
 "use client";
+import { useStartPractice } from "@/hooks/use-start-practice";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import styles from "./trainer.module.css";
 export function HistoryPanel() {
   const history = useTrainer((s) => s.history);
   const remove = useTrainer((s) => s.deleteAttempt);
-  const start = useTrainer((s) => s.start);
+  const start = useStartPractice();
   const [selected, setSelected] = useState<string | null>(null);
   const router = useRouter();
   const attempt = history.find((item) => item.id === selected);
@@ -56,8 +57,7 @@ export function HistoryPanel() {
                 <button
                   className={styles.secondary}
                   onClick={() => {
-                    start(item.context, item.demo);
-                    router.push("/session");
+                    if (start(item.context, item.demo)) router.push("/session");
                   }}
                 >
                   Repeat

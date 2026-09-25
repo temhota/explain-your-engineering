@@ -79,3 +79,16 @@ describe("practice lifecycle", () => {
     expect(s().history[0].id).toBe(original);
   });
 });
+
+it("keeps an unfinished answer unless replacement is explicitly confirmed", () => {
+  const store = createTrainerStore();
+  const s = () => store.getState();
+  s().start(context, false);
+  s().editAnswer(1, "An unfinished explanation");
+  const original = s().session;
+  expect(s().start(context, true)).toBe(false);
+  expect(s().session).toBe(original);
+  expect(s().start(context, true, true)).toBe(true);
+  expect(s().session?.answer1).toBe("");
+  expect(s().session?.id).not.toBe(original?.id);
+});

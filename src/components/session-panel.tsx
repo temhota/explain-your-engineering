@@ -1,4 +1,5 @@
 "use client";
+import { useStartPractice } from "@/hooks/use-start-practice";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ArrowRight, Check, MessageSquare } from "lucide-react";
@@ -18,7 +19,7 @@ export function SessionPanel() {
   const acceptReview = useTrainer((s) => s.acceptFeedback);
   const fail = useTrainer((s) => s.failRequest);
   const cancel = useTrainer((s) => s.cancelRequest);
-  const start = useTrainer((s) => s.start);
+  const start = useStartPractice();
   const abort = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
