@@ -7,16 +7,15 @@ export function Review({ session }: { session: Session }) {
     <div className={styles.review}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.eyebrow}>A little clearer, every time</p>
-          <h2>Your debrief</h2>
+          <h2>Feedback</h2>
         </div>
         <span className={styles.pill}>
           {session.demo ? "Example review" : "AI-assisted review"}
         </span>
       </div>
       <p className={styles.muted}>
-        Use this as a starting point for reflection. Technical claims may need
-        checking; this is not a hiring assessment.
+        Check technical claims against the sources. This feedback is for
+        practice.
       </p>
       <div className={styles.reviewGrid}>
         {(["communication", "technical"] as const).map((section) => (

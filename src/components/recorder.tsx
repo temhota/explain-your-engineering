@@ -93,9 +93,8 @@ export function Recorder({
         </button>
       )}
       <p className={styles.muted}>
-        Recording stays in this tab. Transcribe sends audio to OpenAI;
-        confirming an answer lets you request AI analysis. Review the text
-        before continuing.
+        Up to 3 minutes. Transcribe sends audio to OpenAI. Review the text
+        before confirming.
       </p>
       {(error || recorder.error) && (
         <p role="alert" className={styles.error}>

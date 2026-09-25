@@ -74,9 +74,18 @@ test("public example completes and persists without API calls", async ({
   await page.getByRole("button", { name: "Use example answer" }).click();
   await page.getByRole("button", { name: "Confirm answer" }).click();
   await page.getByRole("button", { name: "Show example review" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem("eye-practice")!).state.session
+            ?.stage,
+      ),
+    )
+    .toBe("complete");
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Your debrief" }),
+    page.getByRole("heading", { name: "Feedback", exact: true }),
   ).toBeVisible();
   expect(apiCalls).toBe(0);
   expect(errors).toEqual([]);
@@ -86,9 +95,7 @@ test("technology practice completes with a deterministic provider and repeats in
 }) => {
   await provider(page);
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Explore React", exact: true })
-    .click();
+  await page.getByRole("button", { name: "React", exact: true }).click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -108,15 +115,18 @@ test("personal story survives reload and completes an experience interview", asy
 }) => {
   await provider(page);
   await page.goto("/");
-  await page.getByRole("tab", { name: "My experience" }).click();
+  await page.getByRole("button", { name: "My experience" }).click();
   await page.getByRole("button", { name: "Add a story" }).click();
   await page.getByLabel("Title", { exact: true }).fill("Offline drafts");
   await page
     .getByLabel("Your decision", { exact: true })
     .fill("Save drafts locally.");
   await page.getByRole("button", { name: "Save story" }).click();
+  await expect(
+    page.getByRole("button", { name: /^(Save story|Saving…)$/ }),
+  ).toHaveCount(0);
   await page.reload();
-  await page.getByRole("tab", { name: "My experience" }).click();
+  await page.getByRole("button", { name: "My experience" }).click();
   await expect(
     page.getByRole("heading", { name: "Offline drafts" }),
   ).toBeVisible();
@@ -126,14 +136,30 @@ test("personal story survives reload and completes an experience interview", asy
 test("disabled endpoints reject direct requests", async ({ request }) => {
   for (const operation of ["feedback", "follow-up", "transcription"])
     expect(
-      (await request.post(`/api/${operation}`, { data: {} })).status(),
+      (
+        await request.post(`http://127.0.0.1:4103/api/${operation}`, {
+          data: {},
+        })
+      ).status(),
     ).toBe(403);
 });
 test("failed requests preserve answers and can be retried", async ({
   page,
 }) => {
+  let attempts = 0;
+  await page.route("**/api/follow-up", async (route) => {
+    attempts++;
+    await route.fulfill(
+      attempts === 1
+        ? {
+            status: 502,
+            json: { error: { message: "The AI service is unavailable." } },
+          }
+        : { json: { question: "Can you give an example of a closure?" } },
+    );
+  });
   await page.goto("/");
-  await page.getByRole("button", { name: "Explore JavaScript" }).click();
+  await page.getByRole("button", { name: "JavaScript" }).click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -144,7 +170,9 @@ test("failed requests preserve answers and can be retried", async ({
   await page.getByRole("button", { name: "Confirm answer" }).click();
   await page.getByRole("button", { name: "Get follow-up" }).click();
   await expect(
-    page.getByRole("alert").filter({ hasText: "Live AI is disabled" }),
+    page
+      .getByRole("alert")
+      .filter({ hasText: "The AI service is unavailable" }),
   ).toBeVisible();
   await expect(page.getByLabel("Explain your thinking in English")).toHaveValue(
     "A closure keeps access to lexical bindings.",
@@ -152,6 +180,12 @@ test("failed requests preserve answers and can be retried", async ({
   await expect(
     page.getByRole("button", { name: "Get follow-up" }),
   ).toBeEnabled();
+  await page.getByRole("button", { name: "Get follow-up" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Can you give an example of a closure?",
+    }),
+  ).toBeVisible();
 });
 test("records browser audio for playback", async ({ page, browserName }) => {
   test.skip(
@@ -206,9 +240,7 @@ test("records browser audio for playback", async ({ page, browserName }) => {
     });
   });
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Explore React", exact: true })
-    .click();
+  await page.getByRole("button", { name: "React", exact: true }).click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -259,9 +291,7 @@ test("starting another practice requires confirmation before discarding a draft"
   page,
 }) => {
   await page.goto("/");
-  await page
-    .getByRole("button", { name: "Explore React", exact: true })
-    .click();
+  await page.getByRole("button", { name: "React", exact: true }).click();
   await page
     .getByRole("button", { name: "Practise", exact: true })
     .first()
@@ -273,7 +303,9 @@ test("starting another practice requires confirmation before discarding a draft"
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "Try the example" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await page.getByRole("link", { name: "Your session", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Continue practice", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/session$/);
   await page.reload();
   await expect(page.getByLabel("Explain your thinking in English")).toHaveValue(
@@ -283,4 +315,31 @@ test("starting another practice requires confirmation before discarding a draft"
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Try the example" }).click();
   await expect(page.getByLabel("Read the example response")).toHaveValue("");
+});
+
+test("public mode explains unavailable AI before starting an answer", async ({
+  page,
+}) => {
+  await page.goto("http://127.0.0.1:4103/");
+  await expect(page.getByText(/Text practice only here/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Practise", exact: true }),
+  ).toHaveCount(12);
+  await page
+    .getByRole("button", { name: "Practise", exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByText(/Recording and AI feedback are unavailable/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Record an answer" }),
+  ).toHaveCount(0);
+  await page
+    .getByLabel("Explain your thinking in English")
+    .fill("A practice answer.");
+  await page.getByRole("button", { name: "Confirm answer" }).click();
+  await expect(
+    page.getByRole("button", { name: "Get follow-up" }),
+  ).toBeDisabled();
 });

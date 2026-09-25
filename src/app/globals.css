@@ -2,8 +2,8 @@
   box-sizing: border-box;
 }
 html {
-  background: #f7f8f2;
-  color: #25392c;
+  background: #fafaf7;
+  color: #262d24;
 }
 body {
   margin: 0;
@@ -33,7 +33,7 @@ summary:focus-visible {
   outline: 2px solid #397255;
 }
 ::selection {
-  background: #d7e8ba;
+  background: #e1e8d7;
 }
 h1,
 h2,

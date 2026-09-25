@@ -2,13 +2,13 @@
 import { useStartPractice } from "@/hooks/use-start-practice";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { ArrowRight, Check, MessageSquare } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useTrainer } from "@/store/provider";
 import { demoAnswers, demoFollowUp, demoFeedback } from "@/lib/demo";
 import { Review } from "./review";
 import { Recorder } from "./recorder";
 import styles from "./trainer.module.css";
-export function SessionPanel() {
+export function SessionPanel({ live = true }: { live?: boolean }) {
   const session = useTrainer((s) => s.session);
   const request = useTrainer((s) => s.request);
   const error = useTrainer((s) => s.error);
@@ -31,9 +31,8 @@ export function SessionPanel() {
   if (!session)
     return (
       <section className={styles.empty}>
-        <MessageSquare size={36} />
-        <h1>A good answer starts with a question.</h1>
-        <p>Choose a topic or bring a story from your own work.</p>
+        <h1>No practice in progress</h1>
+        <p>Choose a question or an experience to begin.</p>
         <Link className={styles.primary} href="/">
           Choose a practice <ArrowRight size={16} />
         </Link>
@@ -100,48 +99,24 @@ export function SessionPanel() {
             review show the full experience. No AI requests are made.
           </p>
         )}
-        {!session.demo && (
+        {!session.demo && !live && (
           <p className={styles.notice}>
-            Live follow-up and review requests send your confirmed answers and
-            the complete selected experience card (if any) to OpenAI.
-            Transcription sends your audio. Use non-confidential examples.
-            Deleting saved browser data does not delete provider-held data.{" "}
-            <a
-              href="https://developers.openai.com/api/docs/guides/your-data"
-              target="_blank"
-              rel="noreferrer"
-            >
-              OpenAI data policy
-            </a>
-            .
+            Text practice only. Recording and AI feedback are unavailable in
+            this deployment. Your answer is saved in this browser.
           </p>
         )}
-        <div className={styles.steps}>
-          <span className={first ? styles.activeStep : ""}>
-            01 · Your answer
-          </span>
-          <span className={!first ? styles.activeStep : ""}>
-            02 · Dig deeper
-          </span>
-          <span>03 · Debrief</span>
-        </div>
         <div className={styles.question}>
           <p className={styles.eyebrow}>
             {session.context.mode === "technology"
               ? "Technical practice"
               : "Your experience"}{" "}
-            / {first ? "Main question" : "Follow-up"}
+            / {first ? "Question 1 of 2" : "Question 2 of 2"}
           </p>
           <h1>{first ? session.context.question : session.followUp}</h1>
         </div>
         <div className={styles.card}>
-          <div className={styles.sectionHeading}>
-            <h2>Your answer</h2>
-            <span className={styles.pill}>
-              {session.demo ? "Example" : "Text input"}
-            </span>
-          </div>
           {!session.demo &&
+            live &&
             (session.stage === "answering" ||
               session.stage === "answering-follow-up") && (
               <Recorder
@@ -170,12 +145,11 @@ export function SessionPanel() {
             maxLength={12000}
             placeholder="Start with your decision. Explain why, then give an example…"
             onChange={(e) => edit(first ? 1 : 2, e.target.value)}
-            rows={8}
+            rows={7}
           />
           <div className={styles.answerFooter}>
             <span>
-              {answer.trim().split(/\s+/).filter(Boolean).length} words · no
-              perfect script needed
+              {answer.trim().split(/\s+/).filter(Boolean).length} words
             </span>
             {session.demo && !answer && (
               <button
@@ -186,6 +160,29 @@ export function SessionPanel() {
               </button>
             )}
           </div>
+          {!session.demo && live && (
+            <div className={styles.privacy}>
+              <p>
+                AI requests send your answers and selected experience card to
+                OpenAI. Transcription sends audio.
+              </p>
+              <details>
+                <summary>Data use</summary>
+                <p>
+                  Use non-confidential examples. Deleting browser data does not
+                  delete provider-held data.{" "}
+                  <a
+                    href="https://developers.openai.com/api/docs/guides/your-data"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    OpenAI data policy
+                  </a>
+                  .
+                </p>
+              </details>
+            </div>
+          )}
           <div className={styles.actions}>
             {(session.stage === "answering" ||
               session.stage === "answering-follow-up") && (
@@ -200,7 +197,7 @@ export function SessionPanel() {
             {session.stage === "ready-follow-up" && (
               <button
                 className={styles.primary}
-                disabled={!!request}
+                disabled={!!request || (!session.demo && !live)}
                 onClick={() => generate("follow-up")}
               >
                 {request
@@ -214,7 +211,7 @@ export function SessionPanel() {
             {session.stage === "ready-feedback" && (
               <button
                 className={styles.primary}
-                disabled={!!request}
+                disabled={!!request || (!session.demo && !live)}
                 onClick={() => generate("feedback")}
               >
                 {request
@@ -243,6 +240,13 @@ export function SessionPanel() {
             </p>
           )}
         </div>
+        <details className={styles.previous}>
+          <summary>Answering tips</summary>
+          <p>
+            State your answer, explain the reasoning, then give a concrete
+            example. If you are unsure, say what you would check.
+          </p>
+        </details>
         {!first && (
           <details className={styles.previous}>
             <summary>Revisit your first answer</summary>
@@ -263,28 +267,6 @@ export function SessionPanel() {
           </details>
         )}
       </section>
-      <aside className={styles.coach}>
-        <span className={styles.coachIcon}>✳</span>
-        <p className={styles.eyebrow}>A useful way to answer</p>
-        <h2>Make your thinking visible.</h2>
-        <ol>
-          <li>
-            <strong>Lead with the answer.</strong>
-            <span>What did you choose or conclude?</span>
-          </li>
-          <li>
-            <strong>Explain the trade-off.</strong>
-            <span>Why this approach over another?</span>
-          </li>
-          <li>
-            <strong>Make it concrete.</strong>
-            <span>Use a small example from your work.</span>
-          </li>
-        </ol>
-        <p className={styles.muted}>
-          You’re practising an explanation, not reciting a definition.
-        </p>
-      </aside>
     </div>
   );
 }

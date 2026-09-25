@@ -28,18 +28,20 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
   const remove = useTrainer((s) => s.deleteExperience);
   const start = useStartPractice();
   const [draft, setDraft] = useState<Experience | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
     <>
       <div className={styles.sectionHeading}>
         <div>
-          <h2>Stories only you can tell.</h2>
+          <h2>Your experience</h2>
           <p className={styles.muted}>
-            Capture a decision, a constraint and your contribution. Leave out
-            confidential details.
+            Save a technical decision to practise explaining. Omit confidential
+            details.
           </p>
         </div>
         <button
+          disabled={saving}
           className={styles.secondary}
           onClick={() => {
             setDraft({ ...empty, id: crypto.randomUUID() });
@@ -53,52 +55,94 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
       {draft && (
         <form
           className={`${styles.card} ${styles.form}`}
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
+            setSaving(true);
+            setError(null);
             try {
-              save(draft);
+              await save(draft);
               setDraft(null);
-            } catch {
+            } catch (error) {
               setError(
-                "Add a title and keep each field within its character limit.",
+                error instanceof Error && !error.message.startsWith("[")
+                  ? error.message
+                  : "Add a title and keep each field within its character limit.",
               );
+            } finally {
+              setSaving(false);
             }
           }}
         >
           <h2>
             {cards.some((c) => c.id === draft.id)
               ? "Edit your story"
-              : "A story from your work"}
+              : "New experience"}
           </h2>
-          {fields.map(([field, label, limit]) => (
-            <label key={field}>
-              {label}
-              {field === "title" ? (
-                <input
-                  required
-                  value={draft[field]}
-                  maxLength={limit}
-                  onChange={(e) =>
-                    setDraft({ ...draft, [field]: e.target.value })
-                  }
-                />
-              ) : (
-                <textarea
-                  rows={3}
-                  value={draft[field]}
-                  maxLength={limit}
-                  onChange={(e) =>
-                    setDraft({ ...draft, [field]: e.target.value })
-                  }
-                />
-              )}
-            </label>
-          ))}
+          {fields
+            .filter(([field]) => field === "title" || field === "decision")
+            .map(([field, label, limit]) => (
+              <label key={field}>
+                {label}
+                {field === "title" ? (
+                  <input
+                    disabled={saving}
+                    required
+                    value={draft[field]}
+                    maxLength={limit}
+                    onChange={(e) =>
+                      setDraft({ ...draft, [field]: e.target.value })
+                    }
+                  />
+                ) : (
+                  <textarea
+                    disabled={saving}
+                    rows={3}
+                    value={draft[field]}
+                    maxLength={limit}
+                    onChange={(e) =>
+                      setDraft({ ...draft, [field]: e.target.value })
+                    }
+                  />
+                )}
+              </label>
+            ))}
+          <details className={styles.formDetails} key={draft.id}>
+            <summary>Add context, role or outcome (optional)</summary>
+            {fields
+              .filter(([field]) => field !== "title" && field !== "decision")
+              .map(([field, label, limit]) => (
+                <label key={field}>
+                  {label}
+                  {field === "title" ? (
+                    <input
+                      disabled={saving}
+                      required
+                      value={draft[field]}
+                      maxLength={limit}
+                      onChange={(e) =>
+                        setDraft({ ...draft, [field]: e.target.value })
+                      }
+                    />
+                  ) : (
+                    <textarea
+                      disabled={saving}
+                      rows={3}
+                      value={draft[field]}
+                      maxLength={limit}
+                      onChange={(e) =>
+                        setDraft({ ...draft, [field]: e.target.value })
+                      }
+                    />
+                  )}
+                </label>
+              ))}
+          </details>
           <div className={styles.actions}>
-            <button className={styles.primary} type="submit">
-              Save story
+            <button className={styles.primary} type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save story"}
             </button>
             <button
+              disabled={saving}
               className={styles.secondary}
               type="button"
               onClick={() => setDraft(null)}
@@ -118,6 +162,7 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
             </div>
             <div className={styles.actions}>
               <button
+                disabled={saving}
                 className={styles.primary}
                 onClick={() => {
                   if (
@@ -137,12 +182,14 @@ export function Experiences({ onPractice }: { onPractice: () => void }) {
                 Practise <ArrowRight size={14} />
               </button>
               <button
+                disabled={saving}
                 className={styles.secondary}
                 onClick={() => setDraft({ ...card })}
               >
                 Edit
               </button>
               <button
+                disabled={saving}
                 className={styles.secondary}
                 onClick={() => {
                   if (

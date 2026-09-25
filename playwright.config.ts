@@ -4,7 +4,7 @@ export default defineConfig({
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
-  use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
+  use: { baseURL: "http://127.0.0.1:4100", trace: "retain-on-failure" },
   projects: [
     {
       name: "chromium",
@@ -20,11 +20,20 @@ export default defineConfig({
     },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
   ],
-  webServer: {
-    command: "npm run dev -- --port 3100",
-    url: "http://127.0.0.1:3100",
-    reuseExistingServer: !process.env.CI,
-    env: { AI_ENABLED: "false" },
-    timeout: 60000,
-  },
+  webServer: [
+    {
+      command: "npm run start -- --port 4100",
+      url: "http://127.0.0.1:4100",
+      reuseExistingServer: false,
+      env: { AI_ENABLED: "true", OPENAI_API_KEY: "" },
+      timeout: 60000,
+    },
+    {
+      command: "npm run start -- --port 4103",
+      url: "http://127.0.0.1:4103",
+      reuseExistingServer: false,
+      env: { AI_ENABLED: "false", OPENAI_API_KEY: "" },
+      timeout: 60000,
+    },
+  ],
 });

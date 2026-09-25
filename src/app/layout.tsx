@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { TrainerProvider } from "@/store/provider";
 import { Shell } from "@/components/shell";
 import "./globals.css";
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Explain Your Engineering — The practice room",
+  title: "Explain Your Engineering",
   description:
-    "Find the words for what you know. Practise technical interviews through clear answers and thoughtful follow-up questions.",
+    "Practise explaining technical decisions in English. Questions, spoken or written answers, and feedback.",
 };
 export default function RootLayout({
   children,

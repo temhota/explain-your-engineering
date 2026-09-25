@@ -15,19 +15,16 @@ export function HistoryPanel() {
   const attempt = history.find((item) => item.id === selected);
   return (
     <>
-      <section className={styles.hero}>
+      <section className={styles.pageHeading}>
         <div>
-          <p className={styles.eyebrow}>Your practice notebook</p>
-          <h1>See your thinking evolve.</h1>
-          <p>
-            Revisit an answer, find a useful next step, then give it another go.
-          </p>
+          <h1>History</h1>
+          <p>Review completed attempts or repeat a question.</p>
         </div>
       </section>
       {history.length === 0 ? (
         <section className={styles.empty}>
-          <h2>Your first attempt belongs here.</h2>
-          <p>Completed sessions are saved in this browser.</p>
+          <h2>No completed attempts</h2>
+          <p>Finish a practice to save its answers and feedback here.</p>
           <Link className={styles.primary} href="/">
             Choose a practice
           </Link>
