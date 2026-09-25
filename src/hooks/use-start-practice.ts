@@ -8,7 +8,7 @@ export function useStartPractice() {
     if (start(context, demo)) return true;
     if (
       !window.confirm(
-        "Discard your unfinished practice and start a new one? Cancel keeps your current answer in Your session.",
+        "Discard your unfinished practice and start a new one? Cancel keeps your current answer.",
       )
     )
       return false;
