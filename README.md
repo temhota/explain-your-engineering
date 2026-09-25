@@ -2,7 +2,7 @@
 
 **Practise explaining technical decisions in English.**
 
-A focused interview notebook: choose a question, explain your reasoning, answer one follow-up, and review the attempt.
+An interview trainer: choose a question, explain your reasoning, answer one follow-up, and review the attempt.
 
 ![Practice room](docs/screenshots/practice.png)
 
@@ -53,7 +53,7 @@ Transcribe sends your recording to OpenAI. Follow-up and review requests send th
 
 ## Engineering choices
 
-**Next.js App Router + TypeScript + Zustand + CSS Modules + Zod.**
+**Next.js App Router + TypeScript + Zustand + Ant Design + Zod.**
 
 Next.js keeps the UI and three server endpoints together. A client Provider creates an isolated Zustand store; explicit actions control the practice lifecycle. Persistence restores after mounting to avoid mismatched server/client HTML. The recorder owns its media stream, timer and object URL outside the store.
 

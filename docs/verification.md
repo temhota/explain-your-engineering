@@ -1,8 +1,8 @@
 # Verification record
 
-Implementation checks, 24 September 2026:
+Implementation checks, 25 September 2026:
 
-- 27 Vitest unit/component/API tests passed.
+- 28 Vitest unit/component/API tests passed.
 - TypeScript, ESLint and Next.js production build passed.
 - Playwright: 17 passed, 1 explicitly skipped across Chromium and WebKit.
 - Both text workflows use deterministic API responses in browser tests; server validation has separate tests.
@@ -22,3 +22,5 @@ Do not describe these missing checks as passed or the project as production-read
 Independent review found and verified fixes for late transcripts overwriting typed text, cross-tab storage conflicts, incomplete provider disclosure, and multipart size enforcement. Regression tests cover the first two and oversized request bodies.
 
 Notebook UI checks, 25 September 2026: immediate question list and filters, compact navigation, optional experience fields, one-column answers, public AI controls disabled before recording, and confirmed persistence before closing the experience form. Mobile inspection at 390 px found no horizontal overflow; the text area begins around 400 px from the top.
+
+Ant Design migration: standard light theme, blue accents, Ant forms and in-app confirmations. Unit coverage checks draft preservation on cancel; Chromium and WebKit cover both confirmation outcomes. Independent code review found no further actionable regressions.

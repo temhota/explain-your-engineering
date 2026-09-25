@@ -59,3 +59,9 @@ Each storage adapter remembers the exact envelope it read or last wrote. Before 
 The server passes AI availability to the session view. Public mode supports written drafts and the scripted example; recording and live-analysis actions are unavailable. Pages read this setting at request time.
 
 Experience saves await the storage adapter’s pending Web Lock write before the form closes. The form remains disabled during this short operation; errors preserve the draft. Browser tests wait for durable persistence before intentionally reloading a completed session.
+
+## UI components
+
+Ant Design provides the standard light theme, forms, navigation, alerts and confirmations. The root AntdRegistry collects server-rendered styles; a client ConfigProvider and App provide component configuration and context-aware dialogs. CSS Modules only arrange the page layout.
+
+Confirmation dialogs resolve asynchronously. Launchers await the result before navigating, and unmounting cancels pending confirmations. A late transcript checks the current session and answer again before replacing text.
